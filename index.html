@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>NexpressNG – Nigeria's #1 Online Store</title>
+<title>NexpressNG - Nigeria's #1 Online Store</title>
+<link rel="manifest" href="/manifest.json"/>
+<meta name="theme-color" content="#FF6B00"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="NexpressNG"/>
+<link rel="apple-touch-icon" href="/icons/icon-192.png"/>
+<meta name="description" content="Nigeria's #1 online marketplace. Shop phones, fashion, electronics and more."/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
 :root{--orange:#FF6B00;--orange-dark:#CC5500;--orange-light:#FFF3E8;--black:#0F0F0F;--white:#FFFFFF;--gray:#F5F5F0;--gray-mid:#D4D2CC;--text:#1A1A1A;--text-muted:#6B6B6B;--green:#00A651;--red:#E53E3E;--shadow:0 2px 16px rgba(0,0,0,0.08);}
@@ -327,6 +334,10 @@ footer{background:var(--black);color:white;margin-top:48px;}
         <span>Wishlist</span>
         <span class="badge" id="wishBadge" style="display:none">0</span>
       </button>
+      <button class="h-btn" id="sellBtn" onclick="loadSellerDashboard()" style="display:none">
+        <span class="icon">🏪</span>
+        <span>Sell</span>
+      </button>
       <button class="h-btn" id="accountBtn" onclick="handleAccountClick()">
         <span class="icon">👤</span>
         <span id="accountLabel">Sign In</span>
@@ -585,10 +596,105 @@ footer{background:var(--black);color:white;margin-top:48px;}
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <button onclick="adminTab('orders')" class="submit-btn" style="width:auto;padding:8px 20px;font-size:13px" id="aTabOrders">Orders</button>
         <button onclick="adminTab('products')" style="background:var(--gray);color:var(--text);border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px" id="aTabProducts">Products</button>
+        <button onclick="adminTab('sellers')" style="background:var(--gray);color:var(--text);border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px" id="aTabSellers">🏪 Sellers</button>
       </div>
       <div id="adminContent"></div>
     </div>
   </div>
+</div>
+
+
+<!-- SELLER DASHBOARD PAGE -->
+<div class="page" id="page-seller">
+  <div class="admin-page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <h2>🏪 Seller Dashboard</h2>
+      <div style="display:flex;gap:8px">
+        <button onclick="openModal('addProductModal')" class="submit-btn" style="width:auto;padding:10px 20px;font-size:13px">+ Add Product</button>
+        <button onclick="showPage('home')" style="background:var(--gray);border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px">← Store</button>
+      </div>
+    </div>
+    <!-- Apply to sell banner -->
+    <div id="sellerApplyBanner" style="display:none;background:var(--orange-light);border:2px solid var(--orange);border-radius:12px;padding:20px;margin-bottom:24px">
+      <h3 style="margin-bottom:8px">Become a Seller on NexpressNG</h3>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:16px">Sell to millions of Nigerians. Fill in your store details to apply.</p>
+      <div class="form-row">
+        <div class="form-group"><label>Store Name</label><input type="text" id="applyStoreName" placeholder="My Shop Name"/></div>
+        <div class="form-group"><label>Bank Name</label><input type="text" id="applyBank" placeholder="GTBank, Access, etc"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Account Number</label><input type="text" id="applyAccNum" placeholder="0123456789"/></div>
+        <div class="form-group"><label>Account Name</label><input type="text" id="applyAccName" placeholder="As on bank account"/></div>
+      </div>
+      <div class="form-group"><label>Store Description</label><textarea id="applyDesc" rows="2" placeholder="What do you sell?"></textarea></div>
+      <button class="submit-btn" onclick="applyToSell()" style="width:auto;padding:10px 24px">Submit Application</button>
+    </div>
+    <div id="sellerPendingBanner" style="display:none;background:#FEF3C7;border:1px solid #F59E0B;border-radius:12px;padding:16px;margin-bottom:24px;font-size:14px">
+      ⏳ Your seller application is under review. We'll notify you within 24 hours.
+    </div>
+    <!-- Analytics cards -->
+    <div class="admin-stats" id="sellerStats"></div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:16px;margin-top:24px">
+      <button onclick="sellerTab('products')" class="submit-btn" style="width:auto;padding:8px 20px;font-size:13px" id="sTabProducts">My Products</button>
+      <button onclick="sellerTab('orders')" style="background:var(--gray);color:var(--text);border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:13px" id="sTabOrders">Orders</button>
+    </div>
+    <div id="sellerContent"></div>
+  </div>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="addProductModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-head">
+      <h3 id="addProdTitle">Add New Product</h3>
+      <button class="close-x" onclick="closeModal('addProductModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editProductId"/>
+      <div class="form-row">
+        <div class="form-group"><label>Product Name *</label><input type="text" id="apName" placeholder="e.g. Samsung Galaxy A55"/></div>
+        <div class="form-group"><label>Brand</label><input type="text" id="apBrand" placeholder="e.g. Samsung"/></div>
+      </div>
+      <div class="form-group"><label>Description</label><textarea id="apDesc2" rows="3" placeholder="Describe your product…"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Price (₦) *</label><input type="number" id="apPrice" placeholder="0"/></div>
+        <div class="form-group"><label>Old Price (₦) (optional)</label><input type="number" id="apOldPrice" placeholder="0"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Stock Quantity *</label><input type="number" id="apStock" placeholder="0"/></div>
+        <div class="form-group"><label>Category *</label><select id="apCategory"></select></div>
+      </div>
+      <!-- IMAGE UPLOAD -->
+      <div class="form-group">
+        <label>Product Images (up to 5)</label>
+        <div id="imageUploadArea" style="border:2px dashed var(--gray-mid);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:border-color 0.2s" onclick="document.getElementById('imageFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--orange)'" ondragleave="this.style.borderColor='var(--gray-mid)'" ondrop="handleImageDrop(event)">
+          <div style="font-size:32px;margin-bottom:8px">📷</div>
+          <p style="font-size:14px;font-weight:500">Click or drag images here</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:4px">JPG, PNG, WEBP • Max 5MB each • Up to 5 images</p>
+          <input type="file" id="imageFileInput" multiple accept="image/*" style="display:none" onchange="handleImageSelect(this.files)"/>
+        </div>
+        <div id="imagePreviewRow" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;margin:0"><input type="checkbox" id="apFlash" style="width:auto"/><label style="margin:0">Flash Sale Item</label></div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px;margin:0"><input type="checkbox" id="apNew" style="width:auto"/><label style="margin:0">New Arrival</label></div>
+      </div>
+      <div class="form-error" id="apError" style="margin-top:8px"></div>
+      <button class="submit-btn" onclick="saveProduct()" id="saveProdBtn" style="margin-top:16px">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div id="pwaInstallBar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--black);color:white;padding:14px 20px;z-index:500;display:none;align-items:center;gap:16px;flex-wrap:wrap">
+  <span style="font-size:20px">📱</span>
+  <div style="flex:1">
+    <div style="font-weight:600;font-size:14px">Install NexpressNG App</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.7)">Shop faster, get notifications, works offline!</div>
+  </div>
+  <button onclick="installPWA()" style="background:var(--orange);color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">Install</button>
+  <button onclick="document.getElementById('pwaInstallBar').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:18px;padding:4px">✕</button>
 </div>
 
 <!-- CART SIDEBAR -->
@@ -783,9 +889,8 @@ async function checkAuth() {
   if (data.user) {
     currentUser = data.user;
     document.getElementById('accountLabel').textContent = data.user.name.split(' ')[0];
-    if (data.user.is_admin) {
-      // Show admin link
-    }
+    document.getElementById('sellBtn').style.display = '';
+    if (data.user.is_admin) { }
     loadCart();
     loadWishlist();
   }
@@ -839,6 +944,7 @@ async function logout() {
   await api('POST', '/api/auth/logout');
   currentUser = null;
   document.getElementById('accountLabel').textContent = 'Sign In';
+  document.getElementById('sellBtn').style.display = 'none';
   cart = []; wishlist = [];
   updateCartUI(); updateWishUI();
   showPage('home');
@@ -880,9 +986,12 @@ function switchAccTab(tab) {
 // ========== PRODUCTS ==========
 function productCard(p) {
   const disc = p.old_price ? Math.round((1 - p.price/p.old_price)*100) : null;
+  const imgHtml = (p.image && p.image.startsWith('/uploads/'))
+    ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover"/>`
+    : `<span class="emoji">${p.image||'📦'}</span>`;
   return `<div class="product-card" onclick="openProduct('${p.slug}')">
     <div class="prod-img">
-      <span class="emoji">${p.image}</span>
+      ${imgHtml}
       ${disc ? `<span class="badge-disc">-${disc}%</span>` : p.is_new ? '<span class="badge-new">NEW</span>' : ''}
       <button class="wish-btn ${wishlist.includes(p.id)?'active':''}" onclick="event.stopPropagation();toggleWish(${p.id},this)" title="Wishlist">${wishlist.includes(p.id)?'❤️':'🤍'}</button>
     </div>
@@ -921,7 +1030,15 @@ async function openProduct(slug) {
   currentProduct = data.product;
   const p = data.product;
   const disc = p.old_price ? Math.round((1-p.price/p.old_price)*100) : null;
-  document.getElementById('pdImg').textContent = p.image;
+  const pdImgEl = document.getElementById('pdImg');
+  if (p.image && p.image.startsWith('/uploads/')) {
+    const imgs = JSON.parse(p.image_urls||'[]');
+    pdImgEl.innerHTML = imgs.length > 0
+      ? `<img src="${imgs[0]}" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:12px" onclick="cycleImage(this,${JSON.stringify(imgs)})" title="Click to view more"/>`
+      : `<img src="${p.image}" style="max-width:100%;max-height:100%;object-fit:contain"/>`;
+  } else {
+    pdImgEl.textContent = p.image || '📦';
+  }
   document.getElementById('pdBrand').textContent = p.brand || '';
   document.getElementById('pdName').textContent = p.name;
   document.getElementById('pdStars').textContent = stars(p.rating||0);
@@ -1243,10 +1360,13 @@ async function loadAdmin() {
 }
 
 async function adminTab(tab) {
-  document.getElementById('aTabOrders').style.background = tab==='orders'?'var(--orange)':'var(--gray)';
-  document.getElementById('aTabOrders').style.color = tab==='orders'?'white':'var(--text)';
-  document.getElementById('aTabProducts').style.background = tab==='products'?'var(--orange)':'var(--gray)';
-  document.getElementById('aTabProducts').style.color = tab==='products'?'white':'var(--text)';
+  ['aTabOrders','aTabProducts','aTabSellers'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isActive = id === 'aTabOrders' && tab==='orders' || id==='aTabProducts' && tab==='products' || id==='aTabSellers' && tab==='sellers';
+    el.style.background = isActive ? 'var(--orange)' : 'var(--gray)';
+    el.style.color = isActive ? 'white' : 'var(--text)';
+  });
 
   if (tab==='orders') {
     const data = await api('GET', '/api/admin/orders');
@@ -1265,13 +1385,13 @@ async function adminTab(tab) {
         </select></td>
       </tr>`).join('')}</tbody>
     </table>`;
-  } else {
+  } else if (tab==='products') {
     const data = await api('GET', '/api/products?limit=100');
     const products = data.products||[];
     document.getElementById('adminContent').innerHTML = `<table class="admin-table">
       <thead><tr><th>Img</th><th>Name</th><th>Price</th><th>Stock</th><th>Category</th><th>Flash</th></tr></thead>
       <tbody>${products.map(p=>`<tr>
-        <td style="font-size:24px">${p.image}</td>
+        <td>${p.image&&p.image.startsWith('/uploads/')?`<img src="${p.image}" style="width:40px;height:40px;object-fit:cover;border-radius:6px"/>`:p.image}</td>
         <td><b>${p.name}</b></td>
         <td>${fmt(p.price)}</td>
         <td style="color:${p.stock<5?'var(--red)':'var(--green)'}">${p.stock}</td>
@@ -1279,7 +1399,29 @@ async function adminTab(tab) {
         <td>${p.is_flash_sale?'✅':'—'}</td>
       </tr>`).join('')}</tbody>
     </table>`;
+  } else if (tab==='sellers') {
+    const data = await api('GET', '/api/seller/admin/applications');
+    const apps = data.applications||[];
+    document.getElementById('adminContent').innerHTML = apps.length ? `<table class="admin-table">
+      <thead><tr><th>Name</th><th>Store</th><th>Bank</th><th>Account</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>${apps.map(a=>`<tr>
+        <td><b>${a.name}</b><br><span style="font-size:11px;color:var(--text-muted)">${a.email}</span></td>
+        <td>${a.store_name||'-'}<br><span style="font-size:11px;color:var(--text-muted)">${(a.store_description||'').substring(0,40)}</span></td>
+        <td>${a.bank_name||'-'}</td>
+        <td>${a.account_name||'-'}<br><span style="font-size:11px">${a.account_number||''}</span></td>
+        <td><span class="status-badge ${a.seller_status==='approved'?'status-delivered':a.seller_status==='rejected'?'status-cancelled':'status-pending'}">${a.seller_status}</span></td>
+        <td style="display:flex;gap:6px">
+          ${a.seller_status!=='approved'?`<button onclick="reviewSeller(${a.id},'approve')" style="background:var(--green);color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px">Approve</button>`:''}
+          ${a.seller_status!=='rejected'?`<button onclick="reviewSeller(${a.id},'reject')" style="background:var(--red);color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px">Reject</button>`:''}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>` : '<div class="empty-state"><div class="es-icon">🏪</div><p>No seller applications yet</p></div>';
   }
+}
+
+async function reviewSeller(id, action) {
+  const data = await api('PUT', '/api/seller/admin/applications/' + id, { action });
+  if (data.success) { showToast(action==='approve'?'Seller approved!':'Seller rejected'); adminTab('sellers'); }
 }
 
 async function updateOrderStatus(orderId, status) {
@@ -1310,6 +1452,8 @@ function checkUrlParams() {
     showToast('Payment failed. Please try again.','error');
     window.history.replaceState({},document.title,'/');
   }
+  if (params.get('goto')==='deals') showDeals();
+  if (params.get('goto')==='orders') loadOrders();
 }
 
 // ========== INIT ==========
@@ -1318,6 +1462,249 @@ checkAuth().then(() => {
   loadHomeProducts();
   checkUrlParams();
 });
+
+// ========== IMAGE CYCLE ==========
+function cycleImage(img, imgs) {
+  const cur = imgs.indexOf(img.src.replace(location.origin,''));
+  const next = imgs[(cur + 1) % imgs.length];
+  img.src = next;
+}
+
+// ========== SELLER ==========
+let sellerImages = [];
+let editingProductId = null;
+
+async function loadSellerDashboard() {
+  if (!currentUser) { openModal('authModal'); return; }
+  const data = await api('GET', '/api/seller/profile');
+  const seller = data.seller;
+
+  document.getElementById('sellerApplyBanner').style.display = (!seller.is_seller && !seller.seller_status && !seller.is_admin) ? '' : 'none';
+  document.getElementById('sellerPendingBanner').style.display = (seller.seller_status === 'pending') ? '' : 'none';
+
+  if (seller.is_seller || seller.is_admin) {
+    const stats = await api('GET', '/api/seller/analytics');
+    document.getElementById('sellerStats').innerHTML = `
+      <div class="stat-card"><div class="stat-val">${stats.totalProducts}</div><div class="stat-lbl">My Products</div></div>
+      <div class="stat-card"><div class="stat-val">${stats.totalOrders}</div><div class="stat-lbl">Total Orders</div></div>
+      <div class="stat-card"><div class="stat-val">${fmt(stats.revenue)}</div><div class="stat-lbl">Revenue</div></div>
+      <div class="stat-card"><div class="stat-val">${stats.pendingOrders}</div><div class="stat-lbl">Pending Orders</div></div>`;
+    sellerTab('products');
+  } else {
+    document.getElementById('sellerStats').innerHTML = '';
+    document.getElementById('sellerContent').innerHTML = '';
+  }
+  showPage('seller');
+  await loadCategoriesForForm();
+}
+
+async function loadCategoriesForForm() {
+  const data = await api('GET', '/api/categories');
+  const cats = data.categories || [];
+  ['apCategory'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<option value="">Select Category</option>' + cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  });
+}
+
+async function sellerTab(tab) {
+  document.getElementById('sTabProducts').style.background = tab==='products'?'var(--orange)':'var(--gray)';
+  document.getElementById('sTabProducts').style.color = tab==='products'?'white':'var(--text)';
+  document.getElementById('sTabOrders').style.background = tab==='orders'?'var(--orange)':'var(--gray)';
+  document.getElementById('sTabOrders').style.color = tab==='orders'?'white':'var(--text)';
+
+  if (tab === 'products') {
+    const data = await api('GET', '/api/seller/products');
+    const products = data.products || [];
+    document.getElementById('sellerContent').innerHTML = products.length ? `
+      <table class="admin-table">
+        <thead><tr><th>Image</th><th>Product</th><th>Price</th><th>Stock</th><th>Sold</th><th>Revenue</th><th>Actions</th></tr></thead>
+        <tbody>${products.map(p => `<tr>
+          <td style="font-size:${p.image&&p.image.startsWith('/uploads/')?'0':'28'}px">
+            ${p.image&&p.image.startsWith('/uploads/') ? `<img src="${p.image}" style="width:48px;height:48px;object-fit:cover;border-radius:8px"/>` : p.image}
+          </td>
+          <td><b>${p.name}</b><br><span style="font-size:11px;color:var(--text-muted)">${p.category_name||''}</span></td>
+          <td>${fmt(p.price)}</td>
+          <td style="color:${p.stock<5?'var(--red)':'var(--green)'}"><b>${p.stock}</b></td>
+          <td>${p.total_sold||0}</td>
+          <td>${fmt(p.total_revenue||0)}</td>
+          <td style="display:flex;gap:6px;align-items:center">
+            <button onclick="editProduct(${JSON.stringify(p).replace(/"/g,'&quot;')})" style="background:var(--orange);color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Edit</button>
+            <button onclick="deleteProduct(${p.id})" style="background:var(--red);color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px">Delete</button>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table>` : '<div class="empty-state"><div class="es-icon">📦</div><p>No products yet. Add your first product!</p></div>';
+  } else {
+    const data = await api('GET', '/api/seller/orders');
+    const orders = data.orders || [];
+    document.getElementById('sellerContent').innerHTML = orders.length ? `
+      <table class="admin-table">
+        <thead><tr><th>#</th><th>Customer</th><th>Items</th><th>My Earnings</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${orders.map(o=>`<tr>
+          <td><b>#${o.id}</b></td>
+          <td>${o.customer_name}<br><span style="font-size:11px;color:var(--text-muted)">${o.customer_phone||''}</span></td>
+          <td>${(o.items||[]).map(i=>`${i.name} ×${i.quantity}`).join(', ')}</td>
+          <td><b>${fmt(o.my_earnings||0)}</b></td>
+          <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+          <td>${new Date(o.created_at).toLocaleDateString('en-GB')}</td>
+        </tr>`).join('')}</tbody>
+      </table>` : '<div class="empty-state"><div class="es-icon">🛒</div><p>No orders yet</p></div>';
+  }
+}
+
+async function applyToSell() {
+  const data = await api('POST', '/api/seller/apply', {
+    store_name: document.getElementById('applyStoreName').value.trim(),
+    bank_name: document.getElementById('applyBank').value.trim(),
+    account_number: document.getElementById('applyAccNum').value.trim(),
+    account_name: document.getElementById('applyAccName').value.trim(),
+    store_description: document.getElementById('applyDesc').value.trim()
+  });
+  if (data.error) { showToast(data.error, 'error'); return; }
+  showToast(data.message || 'Application submitted!');
+  loadSellerDashboard();
+}
+
+// IMAGE UPLOAD
+function handleImageSelect(files) {
+  for (const file of files) {
+    if (sellerImages.length >= 5) break;
+    const reader = new FileReader();
+    reader.onload = e => {
+      sellerImages.push({ file, preview: e.target.result });
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleImageDrop(e) {
+  e.preventDefault();
+  document.getElementById('imageUploadArea').style.borderColor = 'var(--gray-mid)';
+  handleImageSelect(e.dataTransfer.files);
+}
+
+function renderImagePreviews() {
+  document.getElementById('imagePreviewRow').innerHTML = sellerImages.map((img, i) =>
+    `<div style="position:relative;width:80px;height:80px">
+      <img src="${img.preview||img.url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'var(--orange)':'var(--gray-mid)'}"/>
+      ${i===0?'<span style="position:absolute;top:2px;left:2px;background:var(--orange);color:white;font-size:9px;padding:2px 5px;border-radius:4px">Main</span>':''}
+      <button onclick="removeImage(${i})" style="position:absolute;top:2px;right:2px;background:var(--red);color:white;border:none;width:18px;height:18px;border-radius:50%;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>`
+  ).join('');
+}
+
+function removeImage(i) { sellerImages.splice(i, 1); renderImagePreviews(); }
+
+function editProduct(p) {
+  editingProductId = p.id;
+  document.getElementById('addProdTitle').textContent = 'Edit Product';
+  document.getElementById('editProductId').value = p.id;
+  document.getElementById('apName').value = p.name;
+  document.getElementById('apBrand').value = p.brand || '';
+  document.getElementById('apDesc2').value = p.description || '';
+  document.getElementById('apPrice').value = p.price;
+  document.getElementById('apOldPrice').value = p.old_price || '';
+  document.getElementById('apStock').value = p.stock;
+  document.getElementById('apCategory').value = p.category_id;
+  document.getElementById('apFlash').checked = !!p.is_flash_sale;
+  document.getElementById('apNew').checked = !!p.is_new;
+  // Show existing images
+  const existingUrls = JSON.parse(p.image_urls||'[]');
+  sellerImages = existingUrls.map(url => ({ url, preview: url, existing: true }));
+  renderImagePreviews();
+  openModal('addProductModal');
+}
+
+async function saveProduct() {
+  const name = document.getElementById('apName').value.trim();
+  const price = document.getElementById('apPrice').value;
+  const stock = document.getElementById('apStock').value;
+  const category_id = document.getElementById('apCategory').value;
+  document.getElementById('apError').textContent = '';
+
+  if (!name || !price || !stock || !category_id) {
+    document.getElementById('apError').textContent = 'Name, price, stock and category are required';
+    return;
+  }
+  document.getElementById('saveProdBtn').disabled = true;
+  document.getElementById('saveProdBtn').textContent = 'Saving…';
+
+  const formData = new FormData();
+  formData.append('name', name);
+  formData.append('brand', document.getElementById('apBrand').value.trim());
+  formData.append('description', document.getElementById('apDesc2').value.trim());
+  formData.append('price', price);
+  formData.append('old_price', document.getElementById('apOldPrice').value || '');
+  formData.append('stock', stock);
+  formData.append('category_id', category_id);
+  formData.append('is_flash_sale', document.getElementById('apFlash').checked ? '1' : '0');
+  formData.append('is_new', document.getElementById('apNew').checked ? '1' : '0');
+
+  // Only attach new (non-existing) files
+  sellerImages.filter(img => img.file).forEach(img => formData.append('images', img.file));
+
+  const method = editingProductId ? 'PUT' : 'POST';
+  const url = editingProductId ? '/api/seller/products/' + editingProductId : '/api/seller/products';
+  const res = await fetch(url, { method, body: formData, credentials: 'include' });
+  const data = await res.json();
+
+  document.getElementById('saveProdBtn').disabled = false;
+  document.getElementById('saveProdBtn').textContent = 'Save Product';
+
+  if (data.error) { document.getElementById('apError').textContent = data.error; return; }
+  showToast(editingProductId ? 'Product updated!' : 'Product added!');
+  closeModal('addProductModal');
+  // Reset form
+  ['apName','apBrand','apDesc2','apPrice','apOldPrice','apStock'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('apFlash').checked = false;
+  document.getElementById('apNew').checked = false;
+  sellerImages = []; renderImagePreviews();
+  editingProductId = null;
+  document.getElementById('addProdTitle').textContent = 'Add New Product';
+  sellerTab('products');
+  loadHomeProducts();
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  const data = await api('DELETE', '/api/seller/products/' + id);
+  if (data.success) { showToast('Product deleted'); sellerTab('products'); }
+}
+
+// ========== PWA ==========
+let pwaPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  pwaPrompt = e;
+  document.getElementById('pwaInstallBar').style.display = 'flex';
+});
+
+async function installPWA() {
+  if (!pwaPrompt) return;
+  pwaPrompt.prompt();
+  const { outcome } = await pwaPrompt.userChoice;
+  if (outcome === 'accepted') {
+    document.getElementById('pwaInstallBar').style.display = 'none';
+    showToast('NexpressNG installed! 🎉');
+  }
+  pwaPrompt = null;
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBar').style.display = 'none';
+});
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+    }).catch(err => console.log('SW failed:', err));
+  });
+}
+
 </script>
 </body>
 </html>

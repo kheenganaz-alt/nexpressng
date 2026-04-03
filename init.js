@@ -17,6 +17,13 @@ db.exec(`
     address TEXT,
     state TEXT,
     is_admin INTEGER DEFAULT 0,
+    is_seller INTEGER DEFAULT 0,
+    seller_status TEXT DEFAULT '',
+    store_name TEXT DEFAULT '',
+    store_description TEXT DEFAULT '',
+    bank_name TEXT DEFAULT '',
+    account_number TEXT DEFAULT '',
+    account_name TEXT DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
@@ -45,13 +52,17 @@ db.exec(`
     category_id INTEGER,
     brand TEXT,
     image TEXT DEFAULT '📦',
+    image_urls TEXT DEFAULT '[]',
+    seller_id INTEGER DEFAULT NULL,
+    status TEXT DEFAULT 'active',
     rating REAL DEFAULT 0,
     review_count INTEGER DEFAULT 0,
     is_flash_sale INTEGER DEFAULT 0,
     is_featured INTEGER DEFAULT 0,
     is_new INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (seller_id) REFERENCES users(id)
   )
 `);
 

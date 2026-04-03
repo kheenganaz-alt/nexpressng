@@ -1,17 +1,10 @@
 services:
   - type: web
     name: nexpressng
-    env: node
-    region: frankfurt
-    plan: free
-    buildCommand: npm install
-    startCommand: node server.js
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: SESSION_SECRET
-        generateValue: true
-      - key: PAYSTACK_SECRET_KEY
-        sync: false
-      - key: BASE_URL
-        sync: false
+    env: static
+    buildCommand: ""
+    staticPublishPath: .
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
